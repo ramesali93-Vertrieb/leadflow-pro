@@ -31,21 +31,25 @@ export default function LeadDetailPage({ params }) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    setUser(user);
+    setUser(user || null);
 
-    const { data: leadData } = await supabase
+    const { data: leadData, error: leadError } = await supabase
       .from("leads")
       .select("*")
       .eq("id", leadId)
       .single();
 
+    console.log("DETAIL LEAD:", leadData, leadError);
+
     setLead(leadData || null);
 
-    const { data: activityData } = await supabase
+    const { data: activityData, error: activityError } = await supabase
       .from("lead_activities")
       .select("*")
       .eq("lead_id", leadId)
       .order("created_at", { ascending: false });
+
+    console.log("DETAIL ACTIVITIES:", activityData, activityError);
 
     setActivities(activityData || []);
   }
@@ -89,9 +93,7 @@ export default function LeadDetailPage({ params }) {
 
     await supabase
       .from("leads")
-      .update({
-        status: newStatus,
-      })
+      .update({ status: newStatus })
       .eq("id", lead.id);
 
     await supabase.from("lead_activities").insert({
@@ -115,7 +117,7 @@ export default function LeadDetailPage({ params }) {
 
   return (
     <main style={pageStyle}>
-      <div style={topBar}>
+      <div style={{ marginBottom: 16 }}>
         <Link href="/" style={backLink}>
           ← Zurück zur Übersicht
         </Link>
@@ -243,10 +245,6 @@ const pageStyle = {
   padding: 20,
   background:
     "radial-gradient(circle at top left, rgba(99,102,241,0.14), transparent 25%), linear-gradient(180deg, #020617, #0f172a)",
-};
-
-const topBar = {
-  marginBottom: 16,
 };
 
 const backLink = {
