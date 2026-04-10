@@ -1,19 +1,41 @@
 import Link from "next/link";
-import { formatDateTime } from "../../lib/format";
+import { formatDate, formatDateTime } from "../../lib/format";
 
 export type LeadRow = {
   id: string;
-  name: string | null;
-  company: string | null;
-  email: string | null;
-  status: string | null;
-  created_at: string | null;
-  updated_at: string | null;
+  full_name: string;
+  status: string;
+  priority: string;
+  next_step: string;
+  due_date: string;
+  created_at: string;
 };
 
 type LeadsTableProps = {
   leads: LeadRow[];
 };
+
+function getStatusBadgeClass(status: string) {
+  switch (status.toLowerCase()) {
+    case "neu":
+    case "new":
+      return "status-badge";
+    case "kontaktiert":
+    case "contacted":
+      return "status-badge";
+    case "qualifiziert":
+    case "qualified":
+      return "status-badge";
+    case "gewonnen":
+    case "won":
+      return "status-badge";
+    case "verloren":
+    case "lost":
+      return "status-badge";
+    default:
+      return "status-badge";
+  }
+}
 
 export function LeadsTable({ leads }: LeadsTableProps) {
   return (
@@ -24,6 +46,9 @@ export function LeadsTable({ leads }: LeadsTableProps) {
             <tr>
               <th>Lead</th>
               <th>Status</th>
+              <th>Priorität</th>
+              <th>Nächster Schritt</th>
+              <th>Fällig</th>
               <th>Erstellt</th>
               <th>Aktion</th>
             </tr>
@@ -32,28 +57,31 @@ export function LeadsTable({ leads }: LeadsTableProps) {
           <tbody>
             {leads.length === 0 ? (
               <tr>
-                <td colSpan={4} className="empty-state">
+                <td colSpan={7} className="empty-state">
                   Keine Leads vorhanden.
                 </td>
               </tr>
             ) : (
               leads.map((lead) => (
                 <tr key={lead.id}>
-                  <td>{lead.name || "Ohne Namen"}</td>
+                  <td>{lead.full_name}</td>
 
                   <td>
-                    <span className="status-badge">
-                      {lead.status || "Kein Status"}
+                    <span className={getStatusBadgeClass(lead.status)}>
+                      {lead.status}
                     </span>
                   </td>
+
+                  <td>{lead.priority}</td>
+
+                  <td>{lead.next_step}</td>
+
+                  <td>{formatDate(lead.due_date)}</td>
 
                   <td>{formatDateTime(lead.created_at)}</td>
 
                   <td>
-                    <Link
-                      href={`/leads/${lead.id}`}
-                      className="table-action"
-                    >
+                    <Link href={`/leads/${lead.id}`} className="table-action">
                       Öffnen
                     </Link>
                   </td>
