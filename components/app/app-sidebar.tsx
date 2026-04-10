@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createBrowserSupabaseClient } from "../../lib/supabase-browser";
 
 const navItems = [
   {
@@ -20,6 +21,14 @@ function isActive(pathname: string, href: string) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createBrowserSupabaseClient();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
 
   return (
     <aside className="sidebar">
@@ -41,6 +50,22 @@ export function AppSidebar() {
             </Link>
           );
         })}
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="sidebar-link"
+          style={{
+            marginTop: "8px",
+            textAlign: "left",
+            width: "100%",
+            border: "1px solid #27272a",
+            background: "transparent",
+            cursor: "pointer",
+          }}
+        >
+          Logout
+        </button>
       </nav>
     </aside>
   );
