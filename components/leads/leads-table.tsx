@@ -3,10 +3,10 @@ import { formatDateTime } from "@/lib/format";
 
 export type LeadRow = {
   id: string;
-  name: string;
+  name: string | null;
   company: string | null;
-  status: string | null;
   email: string | null;
+  status: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -18,73 +18,73 @@ type LeadsTableProps = {
 function getStatusBadgeClass(status: string | null) {
   switch ((status || "").toLowerCase()) {
     case "new":
-      return "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200";
+      return "bg-blue-500/10 text-blue-300 ring-1 ring-inset ring-blue-500/30";
     case "contacted":
-      return "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200";
+      return "bg-amber-500/10 text-amber-300 ring-1 ring-inset ring-amber-500/30";
     case "qualified":
-      return "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200";
-    case "lost":
-      return "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200";
+      return "bg-emerald-500/10 text-emerald-300 ring-1 ring-inset ring-emerald-500/30";
     case "won":
-      return "bg-green-50 text-green-700 ring-1 ring-inset ring-green-200";
+      return "bg-green-500/10 text-green-300 ring-1 ring-inset ring-green-500/30";
+    case "lost":
+      return "bg-rose-500/10 text-rose-300 ring-1 ring-inset ring-rose-500/30";
     default:
-      return "bg-zinc-100 text-zinc-700 ring-1 ring-inset ring-zinc-200";
+      return "bg-zinc-800 text-zinc-300 ring-1 ring-inset ring-zinc-700";
   }
 }
 
 export function LeadsTable({ leads }: LeadsTableProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-sm">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-zinc-200">
-          <thead className="bg-zinc-50">
+        <table className="min-w-full divide-y divide-zinc-800">
+          <thead className="bg-zinc-950/50">
             <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                 Lead
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                 Firma
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                 Status
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                 Erstellt
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-400">
                 Aktualisiert
               </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-zinc-500">
+              <th className="px-4 py-3 text-right text-sm font-medium text-zinc-400">
                 Aktion
               </th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-zinc-800">
             {leads.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-12 text-center text-sm text-zinc-500"
+                  className="px-4 py-12 text-center text-sm text-zinc-400"
                 >
                   Keine Leads vorhanden.
                 </td>
               </tr>
             ) : (
               leads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-zinc-50">
+                <tr key={lead.id} className="hover:bg-zinc-800/40">
                   <td className="px-4 py-4">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-zinc-900">
-                        {lead.name}
+                      <p className="truncate text-sm font-medium text-white">
+                        {lead.name || "Ohne Namen"}
                       </p>
-                      <p className="truncate text-sm text-zinc-500">
+                      <p className="truncate text-sm text-zinc-400">
                         {lead.email || "Keine E-Mail"}
                       </p>
                     </div>
                   </td>
 
-                  <td className="px-4 py-4 text-sm text-zinc-700">
+                  <td className="px-4 py-4 text-sm text-zinc-300">
                     {lead.company || "—"}
                   </td>
 
@@ -98,18 +98,18 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                     </span>
                   </td>
 
-                  <td className="px-4 py-4 text-sm text-zinc-600">
+                  <td className="px-4 py-4 text-sm text-zinc-400">
                     {formatDateTime(lead.created_at)}
                   </td>
 
-                  <td className="px-4 py-4 text-sm text-zinc-600">
+                  <td className="px-4 py-4 text-sm text-zinc-400">
                     {formatDateTime(lead.updated_at)}
                   </td>
 
                   <td className="px-4 py-4 text-right text-sm">
                     <Link
                       href={`/leads/${lead.id}`}
-                      className="font-medium text-zinc-900 underline underline-offset-4"
+                      className="font-medium text-white underline underline-offset-4"
                     >
                       Öffnen
                     </Link>
