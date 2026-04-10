@@ -1,9 +1,13 @@
+const DEFAULT_LOCALE = "de-DE";
+const DEFAULT_TIME_ZONE = "Europe/Berlin";
+
 export function formatDate(dateString: string | null | undefined) {
   if (!dateString) return "—";
 
   const date = new Date(dateString);
 
-  return new Intl.DateTimeFormat("de-DE", {
+  return new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIME_ZONE,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -15,7 +19,8 @@ export function formatDateTime(dateString: string | null | undefined) {
 
   const date = new Date(dateString);
 
-  return new Intl.DateTimeFormat("de-DE", {
+  return new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+    timeZone: DEFAULT_TIME_ZONE,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
