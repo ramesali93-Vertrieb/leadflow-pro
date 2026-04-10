@@ -1,32 +1,192 @@
-21:23:00.644 Running build in Washington, D.C., USA (East) – iad1
-21:23:00.645 Build machine configuration: 2 cores, 8 GB
-21:23:00.777 Cloning github.com/ramesali93-Vertrieb/leadflow-pro (Branch: main, Commit: 6660a7d)
-21:23:01.018 Cloning completed: 240.000ms
-21:23:01.573 Restored build cache from previous deployment (9nexPP6wwFny3gxxU1ix326hohc9)
-21:23:01.846 Running "vercel build"
-21:23:03.129 Vercel CLI 50.42.0
-21:23:03.389 Installing dependencies...
-21:23:06.925 
-21:23:06.926 up to date in 3s
-21:23:06.926 
-21:23:06.927 3 packages are looking for funding
-21:23:06.927   run `npm fund` for details
-21:23:06.954 Detected Next.js version: 14.2.15
-21:23:06.957 Running "npm run build"
-21:23:07.058 
-21:23:07.059 > leadflow-pro@0.1.0 build
-21:23:07.059 > next build
-21:23:07.059 
-21:23:07.719   ▲ Next.js 14.2.15
-21:23:07.720 
-21:23:07.736    Creating an optimized production build ...
-21:23:10.390 Failed to compile.
-21:23:10.391 
-21:23:10.391 ./app/(app)/leads/[id]/page.tsx
-21:23:10.391 Module not found: Can't resolve '../../lib/supabase-browser'
-21:23:10.391 
-21:23:10.392 https://nextjs.org/docs/messages/module-not-found
-21:23:10.392 
-21:23:10.402 
-21:23:10.402 > Build failed because of webpack errors
-21:23:10.429 Error: Command "npm run build" exited with 1
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserSupabaseClient } from "../../lib/supabase-browser";
+
+type AddActivityFormProps = {
+  leadId: string;
+};
+
+export function AddActivityForm({ leadId }: AddActivityFormProps) {
+  const router = useRouter();
+  const supabase = createBrowserSupabaseClient();
+
+  const [activityType, setActivityType] = useState("note");
+  const [body, setBody] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const trimmedBody = body.trim();
+
+    if (!trimmedBody) {
+      setErrorMessage("Bitte einen Inhalt für die Aktivität eingeben.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        throw new Error(userError.message);
+      }
+
+      if (!user) {
+        throw new Error("Kein eingeloggter Benutzer gefunden.");
+      }
+
+      const { error: insertError } = await supabase.from("lead_activities").insert({
+        lead_id: leadId,
+        user_id: user.id,
+        activity_type: activityType,
+        body: trimmedBody,
+        metadata: {},
+      });
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
+
+      setBody("");
+      setSuccessMessage("Aktivität erfolgreich gespeichert.");
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unbekannter Fehler beim Speichern.";
+      setErrorMessage(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="card" style={{ padding: "24px" }}>
+      <h2 style={{ marginTop: 0 }}>Neue Aktivität</h2>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          display: "grid",
+          gap: "16px",
+        }}
+      >
+        <div>
+          <label
+            htmlFor="activityType"
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              fontWeight: 600,
+            }}
+          >
+            Aktivitätstyp
+          </label>
+
+          <select
+            id="activityType"
+            value={activityType}
+            onChange={(event) => setActivityType(event.target.value)}
+            style={{
+              width: "100%",
+              padding: "12px",
+              borderRadius: "10px",
+              border: "1px solid #27272a",
+              background: "#111113",
+              color: "#f4f4f5",
+            }}
+          >
+            <option value="note">Notiz</option>
+            <option value="call">Anruf</option>
+            <option value="email">E-Mail</option>
+            <option value="followup">Follow-up</option>
+            <option value="offer">Angebot</option>
+            <option value="system">System</option>
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="activityBody"
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              fontWeight: 600,
+            }}
+          >
+            Inhalt
+          </label>
+
+          <textarea
+            id="activityBody"
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            rows={6}
+            placeholder="Notiz oder Aktivität eingeben..."
+            style={{
+              width: "100%",
+              padding: "12px",
+              borderRadius: "10px",
+              border: "1px solid #27272a",
+              background: "#111113",
+              color: "#f4f4f5",
+              resize: "vertical",
+            }}
+          />
+        </div>
+
+        {errorMessage ? (
+          <div
+            style={{
+              color: "#fda4af",
+              fontSize: "14px",
+            }}
+          >
+            {errorMessage}
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div
+            style={{
+              color: "#86efac",
+              fontSize: "14px",
+            }}
+          >
+            {successMessage}
+          </div>
+        ) : null}
+
+        <div>
+          <button
+            type="submit"
+            disabled={isSaving}
+            style={{
+              padding: "12px 16px",
+              borderRadius: "10px",
+              border: "1px solid #27272a",
+              background: "#ffffff",
+              color: "#09090b",
+              fontWeight: 600,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              opacity: isSaving ? 0.7 : 1,
+            }}
+          >
+            {isSaving ? "Speichert..." : "Aktivität speichern"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
