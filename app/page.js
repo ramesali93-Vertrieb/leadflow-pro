@@ -70,49 +70,19 @@ export default function HomePage() {
   }
 
   async function loadLeads(userId, roleOverride = null) {
-    const role = roleOverride || profile?.role;
-
-    let query = supabase
+    const { data, error } = await supabase
       .from("leads")
-      .select(`
-        id,
-        external_lead_id,
-        full_name,
-        phone,
-        email,
-        city,
-        status,
-        priority,
-        next_step,
-        due_date,
-        offer_amount,
-        win_chance,
-        base_note,
-        source,
-        project_start,
-        roof_type,
-        storage_interest,
-        financing,
-        address,
-        owner_id,
-        owner:owner_id ("*"
-        ),
-        last_activity_type,
-        last_activity_at
-      `)
+      .select("*")
       .order("created_at", { ascending: false });
 
-    if (role !== "admin") {
-      query = query.eq("owner_id", userId);
-    }
-
-    const { data, error } = await query;
+    console.log("LEADS RAW:", data, error);
 
     if (!error && data) {
       setLeads(data);
       return data;
     }
 
+    setLeads([]);
     return [];
   }
 
@@ -249,7 +219,11 @@ export default function HomePage() {
     if (!user) return;
 
     const loadedLeads = await loadLeads(user.id, profile?.role);
-    const updatedLead = loadedLeads.find((l) => l.id === currentLeadId) || loadedLeads[0] || null;
+    const updatedLead =
+      loadedLeads.find((l) => l.id === currentLeadId) ||
+      loadedLeads[0] ||
+      null;
+
     setSelectedLead(updatedLead);
 
     if (updatedLead) {
@@ -281,7 +255,10 @@ export default function HomePage() {
   const pipelineValue = useMemo(
     () =>
       leads.reduce(
-        (sum, lead) => sum + Number(lead.offer_amount || 0) * (Number(lead.win_chance || 0) / 100),
+        (sum, lead) =>
+          sum +
+          Number(lead.offer_amount || 0) *
+            (Number(lead.win_chance || 0) / 100),
         0
       ),
     [leads]
@@ -310,15 +287,14 @@ export default function HomePage() {
             boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
           }}
         >
-          <h1 style={{ marginTop: 0, fontSize: 42, marginBottom: 8 }}>Leadflow Pro</h1>
+          <h1 style={{ marginTop: 0, fontSize: 42, marginBottom: 8 }}>
+            Leadflow Pro
+          </h1>
           <p style={{ color: "#94a3b8", marginBottom: 24 }}>
             Vertriebssystem mit Login, Leads und Historie
           </p>
 
-          <form
-            onSubmit={handleLogin}
-            style={{ display: "grid", gap: 12 }}
-          >
+          <form onSubmit={handleLogin} style={{ display: "grid", gap: 12 }}>
             <input
               type="email"
               placeholder="E-Mail"
@@ -382,8 +358,12 @@ export default function HomePage() {
           }}
         >
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, letterSpacing: 2, color: "#94a3b8" }}>LEAD OS</div>
-            <div style={{ fontSize: 28, fontWeight: 800, marginTop: 8 }}>Leadflow Pro</div>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: "#94a3b8" }}>
+              LEAD OS
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 800, marginTop: 8 }}>
+              Leadflow Pro
+            </div>
           </div>
 
           <div
@@ -431,10 +411,15 @@ export default function HomePage() {
                 Sales Ops Command Center
               </div>
               <h1 style={{ margin: "8px 0 8px", fontSize: 36 }}>
-                {profile?.role === "admin" ? "Alle Leads im Blick" : "Deine Leads im Blick"}
+                {profile?.role === "admin"
+                  ? "Alle Leads im Blick"
+                  : "Deine Leads im Blick"}
               </h1>
               <p style={{ color: "#94a3b8", margin: 0 }}>
                 Heute-Ansicht, Lead-Liste und Aktivitäts-Historie
+              </p>
+              <p style={{ color: "#94a3b8", marginTop: 8 }}>
+                Rolle: {profile?.role} · Geladene Leads: {leads.length}
               </p>
             </div>
 
@@ -463,7 +448,10 @@ export default function HomePage() {
             <StatCard title="Sichtbare Leads" value={leads.length} />
             <StatCard title="Heute fällig" value={dueToday.length} />
             <StatCard title="Offene Leads" value={openLeads.length} />
-            <StatCard title="Pipeline Wert" value={`${pipelineValue.toFixed(0)} €`} />
+            <StatCard
+              title="Pipeline Wert"
+              value={`${pipelineValue.toFixed(0)} €`}
+            />
           </div>
 
           <div
@@ -475,10 +463,14 @@ export default function HomePage() {
               marginBottom: 20,
             }}
           >
-            <div style={{ fontWeight: 700, marginBottom: 14 }}>Heute anstehend</div>
+            <div style={{ fontWeight: 700, marginBottom: 14 }}>
+              Heute anstehend
+            </div>
 
             {dueToday.length === 0 ? (
-              <div style={{ color: "#94a3b8" }}>Keine offenen Aufgaben für heute.</div>
+              <div style={{ color: "#94a3b8" }}>
+                Keine offenen Aufgaben für heute.
+              </div>
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
                 {dueToday.map((lead) => (
@@ -497,7 +489,7 @@ export default function HomePage() {
                   >
                     <div style={{ fontWeight: 700 }}>{lead.full_name}</div>
                     <div style={{ color: "#94a3b8", fontSize: 14, marginTop: 4 }}>
-                      {lead.owner?.name || "—"} · {lead.next_step}
+                      {lead.owner_id || "—"} · {lead.next_step}
                     </div>
                   </button>
                 ))}
@@ -564,7 +556,7 @@ export default function HomePage() {
                     {lead.status}
                   </span>
                 </div>
-                <div>{lead.owner?.name || "—"}</div>
+                <div>{lead.owner_id || "—"}</div>
                 <div>{lead.next_step}</div>
                 <div>{lead.due_date}</div>
               </button>
@@ -597,7 +589,7 @@ export default function HomePage() {
                     {selectedLead.full_name}
                   </div>
                   <div style={{ color: "#94a3b8", marginTop: 6 }}>
-                    {selectedLead.city || "—"} · {selectedLead.owner?.name || "—"}
+                    {selectedLead.city || "—"} · {selectedLead.owner_id || "—"}
                   </div>
                 </div>
 
@@ -605,10 +597,19 @@ export default function HomePage() {
                   <InfoBox label="Telefon" value={selectedLead.phone || "—"} />
                   <InfoBox label="E-Mail" value={selectedLead.email || "—"} />
                   <InfoBox label="Status" value={selectedLead.status || "—"} />
-                  <InfoBox label="Nächster Schritt" value={selectedLead.next_step || "—"} />
+                  <InfoBox
+                    label="Nächster Schritt"
+                    value={selectedLead.next_step || "—"}
+                  />
                   <InfoBox label="Fällig" value={selectedLead.due_date || "—"} />
-                  <InfoBox label="Angebot" value={`${selectedLead.offer_amount || 0} €`} />
-                  <InfoBox label="Chance" value={`${selectedLead.win_chance || 0}%`} />
+                  <InfoBox
+                    label="Angebot"
+                    value={`${selectedLead.offer_amount || 0} €`}
+                  />
+                  <InfoBox
+                    label="Chance"
+                    value={`${selectedLead.win_chance || 0}%`}
+                  />
                   <InfoBox label="Quelle" value={selectedLead.source || "—"} />
                 </div>
 
@@ -621,7 +622,9 @@ export default function HomePage() {
                     marginBottom: 18,
                   }}
                 >
-                  <div style={{ fontWeight: 700, marginBottom: 10 }}>Lead-Notiz</div>
+                  <div style={{ fontWeight: 700, marginBottom: 10 }}>
+                    Lead-Notiz
+                  </div>
                   <div style={{ color: "#cbd5e1", fontSize: 14 }}>
                     {selectedLead.base_note || "Noch keine Basisnotiz."}
                   </div>
@@ -636,7 +639,9 @@ export default function HomePage() {
                     marginBottom: 18,
                   }}
                 >
-                  <div style={{ fontWeight: 700, marginBottom: 10 }}>Neue Notiz</div>
+                  <div style={{ fontWeight: 700, marginBottom: 10 }}>
+                    Neue Notiz
+                  </div>
                   <textarea
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
@@ -652,7 +657,10 @@ export default function HomePage() {
                       resize: "vertical",
                     }}
                   />
-                  <button onClick={addNote} style={{ ...primaryButton, width: "100%", marginTop: 10 }}>
+                  <button
+                    onClick={addNote}
+                    style={{ ...primaryButton, width: "100%", marginTop: 10 }}
+                  >
                     Notiz speichern
                   </button>
                 </div>
@@ -666,12 +674,28 @@ export default function HomePage() {
                     marginBottom: 18,
                   }}
                 >
-                  <div style={{ fontWeight: 700, marginBottom: 10 }}>Quick Actions</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <button onClick={() => quickAction("call")} style={secondaryButton}>Anruf</button>
-                    <button onClick={() => quickAction("email")} style={secondaryButton}>E-Mail</button>
-                    <button onClick={() => quickAction("followup")} style={secondaryButton}>Follow-up</button>
-                    <button onClick={() => quickAction("offer")} style={secondaryButton}>Angebot</button>
+                  <div style={{ fontWeight: 700, marginBottom: 10 }}>
+                    Quick Actions
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 10,
+                    }}
+                  >
+                    <button onClick={() => quickAction("call")} style={secondaryButton}>
+                      Anruf
+                    </button>
+                    <button onClick={() => quickAction("email")} style={secondaryButton}>
+                      E-Mail
+                    </button>
+                    <button onClick={() => quickAction("followup")} style={secondaryButton}>
+                      Follow-up
+                    </button>
+                    <button onClick={() => quickAction("offer")} style={secondaryButton}>
+                      Angebot
+                    </button>
                   </div>
                 </div>
 
@@ -684,7 +708,9 @@ export default function HomePage() {
                     marginBottom: 18,
                   }}
                 >
-                  <div style={{ fontWeight: 700, marginBottom: 10 }}>Status ändern</div>
+                  <div style={{ fontWeight: 700, marginBottom: 10 }}>
+                    Status ändern
+                  </div>
                   <div style={{ display: "grid", gap: 10 }}>
                     <input
                       value={statusComment}
@@ -692,8 +718,21 @@ export default function HomePage() {
                       placeholder="Kommentar zum Statuswechsel"
                       style={inputStyle}
                     />
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      {["Kontaktversuch", "Termin geplant", "Angebot", "Nachfassen", "Gewonnen", "Storno"].map((status) => (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 10,
+                      }}
+                    >
+                      {[
+                        "Kontaktversuch",
+                        "Termin geplant",
+                        "Angebot",
+                        "Nachfassen",
+                        "Gewonnen",
+                        "Storno",
+                      ].map((status) => (
                         <button
                           key={status}
                           onClick={() => changeStatus(status)}
@@ -726,7 +765,13 @@ export default function HomePage() {
                           background: "#111827",
                         }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                          }}
+                        >
                           <div style={{ fontWeight: 700 }}>
                             {activity.user?.name || "Unbekannt"}
                           </div>
@@ -744,7 +789,9 @@ export default function HomePage() {
                     ))}
 
                     {activities.length === 0 ? (
-                      <div style={{ color: "#94a3b8" }}>Noch keine Aktivitäten vorhanden.</div>
+                      <div style={{ color: "#94a3b8" }}>
+                        Noch keine Aktivitäten vorhanden.
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -799,7 +846,9 @@ function InfoBox({ label, value }) {
         padding: 12,
       }}
     >
-      <div style={{ fontSize: 12, color: "#94a3b8", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontSize: 12, color: "#94a3b8", textTransform: "uppercase" }}>
+        {label}
+      </div>
       <div style={{ marginTop: 6, fontWeight: 700 }}>{value}</div>
     </div>
   );
