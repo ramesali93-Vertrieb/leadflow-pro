@@ -4,34 +4,43 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-const statusColors = {
-  "Neu": "#1e293b",
-  "Erstkontakt offen": "#9a3412",
-  "Kontaktversuch": "#a16207",
-  "Termin geplant": "#6d28d9",
-  "Angebot": "#1d4ed8",
-  "Nachfassen": "#0f766e",
-  "Gewonnen": "#166534",
-  "Storno": "#991b1b",
-};
-
 const TODAY = "2026-04-10";
+
+const statusColors = {
+  Neu: "#1e293b",
+  "Erstkontakt offen": "#9a3412",
+  Kontaktversuch: "#a16207",
+  "Termin geplant": "#6d28d9",
+  Angebot: "#1d4ed8",
+  Nachfassen: "#0f766e",
+  Gewonnen: "#166534",
+  Storno: "#991b1b",
+};
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadPage();
   }, []);
 
-  async function loadData() {
+  async function loadPage() {
+    setLoading(true);
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (!user) {
+      setUser(null);
+      setProfile(null);
+      setLeads([]);
+      setLoading(false);
+      return;
+    }
 
     setUser(user);
 
@@ -43,17 +52,41 @@ export default function DashboardPage() {
 
     setProfile(profileData || null);
 
-    const { data: leadsData } = await supabase
+    const { data: leadData, error } = await supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
 
-    setLeads(leadsData || []);
+    console.log("DASHBOARD LEADS:", leadData, error);
+
+    setLeads(leadData || []);
+    setLoading(false);
   }
 
   async function handleLogout() {
     await supabase.auth.signOut();
     window.location.reload();
+  }
+
+  if (loading) {
+    return (
+      <main style={pageStyle}>
+        <div style={{ color: "white" }}>Lädt...</div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main style={pageStyle}>
+        <div style={cardStyle}>
+          <h1 style={{ marginTop: 0 }}>Leadflow Pro</h1>
+          <p style={{ color: "#94a3b8" }}>
+            Du bist nicht eingeloggt.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   const dueToday = leads.filter(
@@ -73,19 +106,6 @@ export default function DashboardPage() {
       Number(lead.offer_amount || 0) * (Number(lead.win_chance || 0) / 100),
     0
   );
-
-  if (!user) {
-    return (
-      <main style={loginPage}>
-        <div style={loginCard}>
-          <h1 style={{ marginTop: 0 }}>Leadflow Pro</h1>
-          <p style={{ color: "#94a3b8" }}>
-            Bitte zuerst einloggen.
-          </p>
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main style={pageStyle}>
@@ -114,7 +134,10 @@ export default function DashboardPage() {
             <SidebarItem label="Heute" />
           </div>
 
-          <button onClick={handleLogout} style={{ ...secondaryButton, width: "100%", marginTop: 24 }}>
+          <button
+            onClick={handleLogout}
+            style={{ ...secondaryButton, width: "100%", marginTop: 24 }}
+          >
             Logout
           </button>
         </aside>
@@ -125,11 +148,14 @@ export default function DashboardPage() {
               <div style={{ color: "#60a5fa", fontSize: 14, fontWeight: 700 }}>
                 Sales Ops Command Center
               </div>
-              <h1 style={{ margin: "8px 0", fontSize: 38 }}>
-                Lead Übersicht
+              <h1 style={{ margin: "8px 0", fontSize: 38, color: "white" }}>
+                Alle Leads im Blick
               </h1>
               <p style={{ color: "#94a3b8", margin: 0 }}>
-                Klick auf einen Lead, um die komplette Detailseite zu öffnen.
+                Klick auf einen Lead, um die Detailseite zu öffnen.
+              </p>
+              <p style={{ color: "#94a3b8", marginTop: 8 }}>
+                Rolle: {profile?.role} · Geladene Leads: {leads.length}
               </p>
             </div>
 
@@ -146,18 +172,16 @@ export default function DashboardPage() {
           </div>
 
           <div style={panelStyle}>
-            <div style={{ fontWeight: 700, marginBottom: 14 }}>Heute anstehend</div>
+            <div style={{ fontWeight: 700, marginBottom: 14, color: "white" }}>
+              Heute anstehend
+            </div>
 
             {dueToday.length === 0 ? (
               <div style={{ color: "#94a3b8" }}>Keine offenen Aufgaben für heute.</div>
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
                 {dueToday.map((lead) => (
-                  <Link
-                    key={lead.id}
-                    href={`/leads/${lead.id}`}
-                    style={todoCard}
-                  >
+                  <Link key={lead.id} href={`/leads/${lead.id}`} style={todoCard}>
                     <div style={{ fontWeight: 700 }}>{lead.full_name}</div>
                     <div style={{ color: "#94a3b8", fontSize: 14, marginTop: 4 }}>
                       {lead.next_step || "—"}
@@ -178,11 +202,7 @@ export default function DashboardPage() {
             </div>
 
             {leads.map((lead) => (
-              <Link
-                key={lead.id}
-                href={`/leads/${lead.id}`}
-                style={tableRow}
-              >
+              <Link key={lead.id} href={`/leads/${lead.id}`} style={tableRow}>
                 <div>
                   <div style={{ fontWeight: 700 }}>{lead.full_name}</div>
                   <div style={{ color: "#94a3b8", fontSize: 14 }}>
@@ -243,33 +263,25 @@ function StatCard({ title, value }) {
   return (
     <div style={statCard}>
       <div style={{ color: "#94a3b8", fontSize: 14 }}>{title}</div>
-      <div style={{ fontSize: 34, fontWeight: 800, marginTop: 10 }}>{value}</div>
+      <div style={{ fontSize: 34, fontWeight: 800, marginTop: 10, color: "white" }}>
+        {value}
+      </div>
     </div>
   );
 }
-
-const loginPage = {
-  minHeight: "100vh",
-  display: "grid",
-  placeItems: "center",
-  background:
-    "radial-gradient(circle at top left, rgba(99,102,241,0.18), transparent 25%), linear-gradient(180deg, #020617, #0f172a)",
-};
-
-const loginCard = {
-  background: "#111827",
-  border: "1px solid #334155",
-  borderRadius: 24,
-  padding: 28,
-  width: "100%",
-  maxWidth: 420,
-};
 
 const pageStyle = {
   minHeight: "100vh",
   padding: 20,
   background:
     "radial-gradient(circle at top left, rgba(99,102,241,0.14), transparent 25%), linear-gradient(180deg, #020617, #0f172a)",
+};
+
+const cardStyle = {
+  background: "#111827",
+  border: "1px solid #334155",
+  borderRadius: 24,
+  padding: 24,
 };
 
 const layoutStyle = {
@@ -292,6 +304,7 @@ const profileCard = {
   borderRadius: 18,
   padding: 14,
   marginBottom: 20,
+  color: "white",
 };
 
 const headerRow = {
@@ -309,6 +322,7 @@ const roleBadge = {
   padding: "10px 14px",
   fontSize: 14,
   whiteSpace: "nowrap",
+  color: "white",
 };
 
 const statsGrid = {
@@ -357,10 +371,10 @@ const tableHeader = {
   padding: 16,
   background: "#0b1220",
   fontWeight: 700,
+  color: "white",
 };
 
 const tableRow = {
-  width: "100%",
   display: "grid",
   gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr",
   padding: 16,
