@@ -10,20 +10,20 @@ export default async function DashboardPage() {
 
   const { data: leads, error } = await supabase
     .from("leads")
-    .select("id, name, status, created_at")
-    .order("created_at", { ascending: false });
+    .select("id")
+    .limit(50);
 
   if (error) {
     throw new Error("Fehler beim Laden der Leads: " + error.message);
   }
 
-  const normalizedLeads = (leads ?? []).map((lead) => ({
+  const normalizedLeads = (leads ?? []).map((lead, index) => ({
     id: lead.id,
-    name: lead.name ?? null,
+    name: `Lead ${index + 1}`,
     company: null,
     email: null,
-    status: lead.status ?? null,
-    created_at: lead.created_at ?? null,
+    status: null,
+    created_at: null,
     updated_at: null,
   }));
 
