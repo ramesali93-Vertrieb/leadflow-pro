@@ -95,9 +95,7 @@ export default function HomePage() {
         financing,
         address,
         owner_id,
-        owner:owner_id (
-          id,
-          name
+        owner:owner_id ("*"
         ),
         last_activity_type,
         last_activity_at
