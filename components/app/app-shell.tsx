@@ -16,38 +16,31 @@ export function AppShell({
   actions,
 }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <div className="flex min-h-screen">
+    <div className="app-root">
+      <div className="app-layout">
         <AppSidebar />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="border-b border-zinc-800 bg-zinc-950">
-            <div className="flex min-h-16 flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <div className="lg:hidden">
-                  <Link
-                    href="/dashboard"
-                    className="mb-2 inline-flex text-sm font-medium text-zinc-400"
-                  >
-                    Leadflow Pro
-                  </Link>
+        <div className="app-main">
+          <header className="app-header">
+            <div className="app-header-row">
+              <div>
+                <div className="mobile-brand">
+                  <Link href="/dashboard">Leadflow Pro</Link>
                 </div>
 
-                <h1 className="truncate text-3xl font-semibold tracking-tight text-white">
-                  {title}
-                </h1>
+                <h1 className="app-title">{title}</h1>
 
                 {description ? (
-                  <p className="mt-1 text-sm text-zinc-400">{description}</p>
+                  <p className="app-description">{description}</p>
                 ) : null}
               </div>
 
-              {actions ? <div className="shrink-0">{actions}</div> : null}
+              {actions ? <div>{actions}</div> : null}
             </div>
           </header>
 
-          <main className="flex-1 p-4 sm:p-6">
-            <div className="mx-auto max-w-7xl">{children}</div>
+          <main className="app-content">
+            <div className="app-container">{children}</div>
           </main>
         </div>
       </div>
