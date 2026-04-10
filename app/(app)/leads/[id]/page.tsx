@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/components/app/app-shell";
-import { formatDateTime } from "@/lib/format";
-import { createClient } from "@/utils/supabase/server";
+import { notFound } from "next/navigation";
+import { AppShell } from "../../../../components/app/app-shell";
+import { formatDateTime } from "../../../../lib/format";
+import { createServerSupabaseClient } from "../../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 type PageProps = {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 };
 
 type Lead = {
@@ -61,7 +61,12 @@ function getActivityTitle(activity: LeadActivity) {
 }
 
 function getActivityBody(activity: LeadActivity) {
-  return activity.note || activity.content || activity.description || "Kein Inhalt vorhanden.";
+  return (
+    activity.note ||
+    activity.content ||
+    activity.description ||
+    "Kein Inhalt vorhanden."
+  );
 }
 
 function getStatusBadgeClass(status: string | null) {
@@ -82,16 +87,8 @@ function getStatusBadgeClass(status: string | null) {
 }
 
 export default async function LeadDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const supabase = createServerSupabaseClient();
+  const { id } = params;
 
   const [{ data: lead, error: leadError }, { data: activities, error: activitiesError }] =
     await Promise.all([
