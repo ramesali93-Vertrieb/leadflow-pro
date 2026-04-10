@@ -6,9 +6,13 @@ import { createBrowserSupabaseClient } from "../../lib/supabase-browser";
 
 type AddActivityFormProps = {
   leadId: string;
+  fallbackUserId: string;
 };
 
-export function AddActivityForm({ leadId }: AddActivityFormProps) {
+export function AddActivityForm({
+  leadId,
+  fallbackUserId,
+}: AddActivityFormProps) {
   const router = useRouter();
   const supabase = createBrowserSupabaseClient();
 
@@ -31,25 +35,17 @@ export function AddActivityForm({ leadId }: AddActivityFormProps) {
       return;
     }
 
+    if (!fallbackUserId) {
+      setErrorMessage("Kein gültiger User für die Aktivität gefunden.");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError) {
-        throw new Error(userError.message);
-      }
-
-      if (!user) {
-        throw new Error("Kein eingeloggter Benutzer gefunden.");
-      }
-
       const { error: insertError } = await supabase.from("lead_activities").insert({
         lead_id: leadId,
-        user_id: user.id,
+        user_id: fallbackUserId,
         activity_type: activityType,
         body: trimmedBody,
         metadata: {},
