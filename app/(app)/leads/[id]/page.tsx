@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "../../../../components/app/app-shell";
-import { formatDateTime } from "../../../../lib/format";
+import { formatDate, formatDateTime } from "../../../../lib/format";
 import { createServerSupabaseClient } from "../../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -15,75 +15,95 @@ type PageProps = {
 
 type Lead = {
   id: string;
-  name: string;
-  company: string | null;
+  full_name: string;
+  first_name: string | null;
+  last_name: string | null;
+  salutation: string | null;
   email: string | null;
   phone: string | null;
-  status: string | null;
-  notes: string | null;
-  created_at: string | null;
-  updated_at: string | null;
+  city: string | null;
+  postal_code: string | null;
+  street: string | null;
+  address: string | null;
+  status: string;
+  priority: string;
+  next_step: string;
+  due_date: string;
+  base_note: string | null;
+  source: string | null;
+  project_start: string | null;
+  roof_type: string | null;
+  storage_interest: string | null;
+  financing: string | null;
+  offer_amount: number;
+  win_chance: number;
+  owner_id: string | null;
+  created_by: string | null;
+  last_activity_type: string | null;
+  last_activity_at: string | null;
+  last_activity_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type LeadActivity = {
   id: string;
   lead_id: string;
-  type?: string | null;
-  activity_type?: string | null;
-  note?: string | null;
-  content?: string | null;
-  description?: string | null;
-  status_from?: string | null;
-  status_to?: string | null;
-  created_at: string | null;
-  created_by?: string | null;
+  user_id: string;
+  activity_type: string;
+  body: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
 };
 
-function getActivityLabel(activity: LeadActivity) {
-  if (activity.activity_type) return activity.activity_type;
-  if (activity.type) return activity.type;
-  if (activity.status_from || activity.status_to) return "status_change";
-  return "activity";
-}
+type Profile = {
+  id: string;
+  name: string;
+};
 
-function getActivityTitle(activity: LeadActivity) {
-  const label = getActivityLabel(activity);
-
-  if (label === "status_change") {
-    return `Status geändert: ${activity.status_from || "—"} → ${activity.status_to || "—"}`;
-  }
-
-  if (label === "call") return "Anruf";
-  if (label === "note") return "Notiz";
-  if (label === "email") return "E-Mail";
-
-  return label;
-}
-
-function getActivityBody(activity: LeadActivity) {
-  return (
-    activity.note ||
-    activity.content ||
-    activity.description ||
-    "Kein Inhalt vorhanden."
-  );
-}
-
-function getStatusBadgeClass(status: string | null) {
-  switch ((status || "").toLowerCase()) {
-    case "new":
-      return "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200";
-    case "contacted":
-      return "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200";
-    case "qualified":
-      return "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200";
-    case "lost":
-      return "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200";
-    case "won":
-      return "bg-green-50 text-green-700 ring-1 ring-inset ring-green-200";
+function formatActivityType(activityType: string) {
+  switch (activityType) {
+    case "note":
+      return "Notiz";
+    case "call":
+      return "Anruf";
+    case "email":
+      return "E-Mail";
+    case "followup":
+      return "Follow-up";
+    case "offer":
+      return "Angebot";
+    case "status_change":
+      return "Statusänderung";
+    case "import":
+      return "Import";
+    case "system":
+      return "System";
     default:
-      return "bg-zinc-100 text-zinc-700 ring-1 ring-inset ring-zinc-200";
+      return activityType;
   }
+}
+
+function buildAddress(lead: Lead) {
+  if (lead.address) return lead.address;
+
+  const parts = [lead.street, [lead.postal_code, lead.city].filter(Boolean).join(" ")].filter(
+    Boolean
+  );
+
+  return parts.length > 0 ? parts.join(", ") : "—";
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  }).format(value ?? 0);
+}
+
+function getProfileName(profileMap: Map<string, string>, id: string | null) {
+  if (!id) return "—";
+  return profileMap.get(id) ?? id;
 }
 
 export default async function LeadDetailPage({ params }: PageProps) {
@@ -94,12 +114,45 @@ export default async function LeadDetailPage({ params }: PageProps) {
     await Promise.all([
       supabase
         .from("leads")
-        .select("id, name, company, email, phone, status, notes, created_at, updated_at")
+        .select(
+          `
+            id,
+            full_name,
+            first_name,
+            last_name,
+            salutation,
+            email,
+            phone,
+            city,
+            postal_code,
+            street,
+            address,
+            status,
+            priority,
+            next_step,
+            due_date,
+            base_note,
+            source,
+            project_start,
+            roof_type,
+            storage_interest,
+            financing,
+            offer_amount,
+            win_chance,
+            owner_id,
+            created_by,
+            last_activity_type,
+            last_activity_at,
+            last_activity_by,
+            created_at,
+            updated_at
+          `
+        )
         .eq("id", id)
         .single<Lead>(),
       supabase
         .from("lead_activities")
-        .select("*")
+        .select("id, lead_id, user_id, activity_type, body, metadata, created_at")
         .eq("lead_id", id)
         .order("created_at", { ascending: false }),
     ]);
@@ -109,131 +162,256 @@ export default async function LeadDetailPage({ params }: PageProps) {
   }
 
   if (activitiesError) {
-    throw new Error(`Fehler beim Laden der Aktivitäten: ${activitiesError.message}`);
+    throw new Error("Fehler beim Laden der Aktivitäten: " + activitiesError.message);
+  }
+
+  const userIds = Array.from(
+    new Set(
+      [
+        lead.owner_id,
+        lead.created_by,
+        lead.last_activity_by,
+        ...(activities ?? []).map((activity) => activity.user_id),
+      ].filter(Boolean)
+    )
+  ) as string[];
+
+  let profileMap = new Map<string, string>();
+
+  if (userIds.length > 0) {
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, name")
+      .in("id", userIds);
+
+    if (profilesError) {
+      throw new Error("Fehler beim Laden der Profile: " + profilesError.message);
+    }
+
+    profileMap = new Map((profiles as Profile[]).map((profile) => [profile.id, profile.name]));
   }
 
   return (
     <AppShell
-      title="Lead-Detail"
-      description="Einzelansicht des Leads mit Stammdaten und vollständiger Aktivitäts-Historie."
+      title={lead.full_name}
+      description="Lead-Detailseite mit Stammdaten, Basisnotiz und Aktivitätshistorie"
       actions={
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-100"
-        >
+        <Link href="/dashboard" className="table-action">
           Zurück zum Dashboard
         </Link>
       }
     >
-      <div className="space-y-6">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
-                {lead.name}
-              </h2>
+      <div
+        style={{
+          display: "grid",
+          gap: "24px",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gap: "24px",
+            gridTemplateColumns: "1.2fr 0.8fr",
+          }}
+        >
+          <section className="card" style={{ padding: "24px" }}>
+            <h2 style={{ marginTop: 0 }}>Stammdaten</h2>
 
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <span
-                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(
-                    lead.status
-                  )}`}
-                >
-                  {lead.status || "Kein Status"}
-                </span>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: "16px 24px",
+              }}
+            >
+              <div>
+                <strong>Name</strong>
+                <div>{lead.full_name}</div>
+              </div>
 
-                <span className="text-sm text-zinc-500">
-                  Erstellt: {formatDateTime(lead.created_at)}
-                </span>
+              <div>
+                <strong>Anrede</strong>
+                <div>{lead.salutation || "—"}</div>
+              </div>
 
-                <span className="text-sm text-zinc-500">
-                  Aktualisiert: {formatDateTime(lead.updated_at)}
-                </span>
+              <div>
+                <strong>E-Mail</strong>
+                <div>{lead.email || "—"}</div>
+              </div>
+
+              <div>
+                <strong>Telefon</strong>
+                <div>{lead.phone || "—"}</div>
+              </div>
+
+              <div>
+                <strong>Adresse</strong>
+                <div>{buildAddress(lead)}</div>
+              </div>
+
+              <div>
+                <strong>Quelle</strong>
+                <div>{lead.source || "—"}</div>
+              </div>
+
+              <div>
+                <strong>Status</strong>
+                <div>{lead.status}</div>
+              </div>
+
+              <div>
+                <strong>Priorität</strong>
+                <div>{lead.priority}</div>
+              </div>
+
+              <div>
+                <strong>Nächster Schritt</strong>
+                <div>{lead.next_step}</div>
+              </div>
+
+              <div>
+                <strong>Fällig</strong>
+                <div>{formatDate(lead.due_date)}</div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <div className="grid gap-6 xl:grid-cols-3">
-          <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm xl:col-span-1">
-            <h3 className="text-lg font-semibold text-zinc-900">Stammdaten</h3>
-
-            <dl className="mt-5 space-y-4 text-sm">
-              <div>
-                <dt className="text-zinc-500">Name</dt>
-                <dd className="mt-1 font-medium text-zinc-900">{lead.name}</dd>
-              </div>
-
-              <div>
-                <dt className="text-zinc-500">Firma</dt>
-                <dd className="mt-1 text-zinc-900">{lead.company || "—"}</dd>
-              </div>
-
-              <div>
-                <dt className="text-zinc-500">E-Mail</dt>
-                <dd className="mt-1 text-zinc-900">{lead.email || "—"}</dd>
-              </div>
-
-              <div>
-                <dt className="text-zinc-500">Telefon</dt>
-                <dd className="mt-1 text-zinc-900">{lead.phone || "—"}</dd>
-              </div>
-
-              <div>
-                <dt className="text-zinc-500">Status</dt>
-                <dd className="mt-1 text-zinc-900">{lead.status || "—"}</dd>
-              </div>
-            </dl>
           </section>
 
-          <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm xl:col-span-2">
-            <h3 className="text-lg font-semibold text-zinc-900">Notizen</h3>
+          <section className="card" style={{ padding: "24px" }}>
+            <h2 style={{ marginTop: 0 }}>CRM-Daten</h2>
 
-            <div className="mt-4 rounded-xl bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
-              {lead.notes || "Noch keine Lead-Notizen vorhanden."}
-            </div>
+            <div
+              style={{
+                display: "grid",
+                gap: "16px",
+              }}
+            >
+              <div>
+                <strong>Angebot</strong>
+                <div>{formatCurrency(lead.offer_amount)}</div>
+              </div>
 
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-zinc-900">Aktivitäts-Historie</h3>
+              <div>
+                <strong>Abschlusschance</strong>
+                <div>{lead.win_chance}%</div>
+              </div>
 
-              <div className="mt-4 space-y-4">
-                {(activities as LeadActivity[] | null)?.length ? (
-                  (activities as LeadActivity[]).map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="rounded-xl border border-zinc-200 p-4"
-                    >
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-zinc-900">
-                            {getActivityTitle(activity)}
-                          </p>
-                          <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-zinc-600">
-                            {getActivityBody(activity)}
-                          </p>
-                        </div>
+              <div>
+                <strong>Projektstart</strong>
+                <div>{lead.project_start || "—"}</div>
+              </div>
 
-                        <div className="shrink-0 text-xs text-zinc-500">
-                          {formatDateTime(activity.created_at)}
-                        </div>
-                      </div>
+              <div>
+                <strong>Dachtyp</strong>
+                <div>{lead.roof_type || "—"}</div>
+              </div>
 
-                      {activity.created_by ? (
-                        <p className="mt-3 text-xs text-zinc-400">
-                          Erstellt von: {activity.created_by}
-                        </p>
-                      ) : null}
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-sm text-zinc-500">
-                    Noch keine Aktivitäten für diesen Lead vorhanden.
-                  </div>
-                )}
+              <div>
+                <strong>Speicherinteresse</strong>
+                <div>{lead.storage_interest || "—"}</div>
+              </div>
+
+              <div>
+                <strong>Finanzierung</strong>
+                <div>{lead.financing || "—"}</div>
+              </div>
+
+              <div>
+                <strong>Owner</strong>
+                <div>{getProfileName(profileMap, lead.owner_id)}</div>
+              </div>
+
+              <div>
+                <strong>Erstellt von</strong>
+                <div>{getProfileName(profileMap, lead.created_by)}</div>
+              </div>
+
+              <div>
+                <strong>Letzte Aktivität</strong>
+                <div>
+                  {lead.last_activity_type
+                    ? `${formatActivityType(lead.last_activity_type)} · ${formatDateTime(
+                        lead.last_activity_at
+                      )}`
+                    : "—"}
+                </div>
+              </div>
+
+              <div>
+                <strong>Zuletzt aktualisiert</strong>
+                <div>{formatDateTime(lead.updated_at)}</div>
               </div>
             </div>
           </section>
         </div>
+
+        <section className="card" style={{ padding: "24px" }}>
+          <h2 style={{ marginTop: 0 }}>Basisnotiz</h2>
+          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+            {lead.base_note || "Keine Basisnotiz vorhanden."}
+          </div>
+        </section>
+
+        <section className="card" style={{ padding: "24px" }}>
+          <h2 style={{ marginTop: 0 }}>Aktivitätshistorie</h2>
+
+          {(activities ?? []).length === 0 ? (
+            <div className="empty-state">Noch keine Aktivitäten vorhanden.</div>
+          ) : (
+            <div style={{ display: "grid", gap: "16px" }}>
+              {(activities as LeadActivity[]).map((activity) => (
+                <div
+                  key={activity.id}
+                  style={{
+                    border: "1px solid #27272a",
+                    borderRadius: "14px",
+                    padding: "16px",
+                    background: "#111113",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: "16px",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <strong>{formatActivityType(activity.activity_type)}</strong>
+                    <span style={{ color: "#a1a1aa", fontSize: "14px" }}>
+                      {formatDateTime(activity.created_at)}
+                    </span>
+                  </div>
+
+                  <div style={{ marginBottom: "10px", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                    {activity.body}
+                  </div>
+
+                  <div style={{ color: "#a1a1aa", fontSize: "14px" }}>
+                    Von: {getProfileName(profileMap, activity.user_id)}
+                  </div>
+
+                  {activity.metadata &&
+                  typeof activity.metadata === "object" &&
+                  Object.keys(activity.metadata).length > 0 ? (
+                    <pre
+                      style={{
+                        marginTop: "12px",
+                        padding: "12px",
+                        borderRadius: "10px",
+                        background: "#09090b",
+                        color: "#d4d4d8",
+                        overflowX: "auto",
+                        fontSize: "12px",
+                      }}
+                    >
+                      {JSON.stringify(activity.metadata, null, 2)}
+                    </pre>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </AppShell>
   );
