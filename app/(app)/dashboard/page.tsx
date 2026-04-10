@@ -1,3 +1,4 @@
+import { AuthGuard } from "../../../components/app/auth-guard";
 import { AppShell } from "../../../components/app/app-shell";
 import { LeadsTable } from "../../../components/leads/leads-table";
 import { createServerSupabaseClient } from "../../../lib/supabase-server";
@@ -39,11 +40,13 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <AppShell
-      title="Dashboard"
-      description="Lead-Übersicht mit echtem Datenbestand"
-    >
-      <LeadsTable leads={leads} />
-    </AppShell>
+    <AuthGuard>
+      <AppShell
+        title="Dashboard"
+        description="Lead-Übersicht mit echtem Datenbestand"
+      >
+        <LeadsTable leads={leads} />
+      </AppShell>
+    </AuthGuard>
   );
 }
