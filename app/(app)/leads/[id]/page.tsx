@@ -192,6 +192,8 @@ export default async function LeadDetailPage({ params }: PageProps) {
     profileMap = new Map((profiles as Profile[]).map((profile) => [profile.id, profile.name]));
   }
 
+  const fallbackUserId = lead.owner_id || lead.created_by || "";
+
   return (
     <AppShell
       title={lead.full_name}
@@ -352,7 +354,7 @@ export default async function LeadDetailPage({ params }: PageProps) {
           </div>
         </section>
 
-        <AddActivityForm leadId={lead.id} />
+        <AddActivityForm leadId={lead.id} fallbackUserId={fallbackUserId} />
 
         <section className="card" style={{ padding: "24px" }}>
           <h2 style={{ marginTop: 0 }}>Aktivitätshistorie</h2>
