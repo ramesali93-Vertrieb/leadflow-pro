@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime } from "../../lib/format";
 
 export type LeadRow = {
   id: string;
