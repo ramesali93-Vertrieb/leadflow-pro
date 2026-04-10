@@ -16,29 +16,29 @@ export function AppShell({
   actions,
 }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900">
+    <div className="min-h-screen bg-zinc-950 text-white">
       <div className="flex min-h-screen">
         <AppSidebar />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="border-b border-zinc-200 bg-white">
+          <header className="border-b border-zinc-800 bg-zinc-950">
             <div className="flex min-h-16 flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <div className="lg:hidden">
                   <Link
                     href="/dashboard"
-                    className="mb-2 inline-flex text-sm font-medium text-zinc-500"
+                    className="mb-2 inline-flex text-sm font-medium text-zinc-400"
                   >
                     Leadflow Pro
                   </Link>
                 </div>
 
-                <h1 className="truncate text-2xl font-semibold tracking-tight text-zinc-900">
+                <h1 className="truncate text-3xl font-semibold tracking-tight text-white">
                   {title}
                 </h1>
 
                 {description ? (
-                  <p className="mt-1 text-sm text-zinc-500">{description}</p>
+                  <p className="mt-1 text-sm text-zinc-400">{description}</p>
                 ) : null}
               </div>
 
@@ -46,7 +46,9 @@ export function AppShell({
             </div>
           </header>
 
-          <main className="flex-1 p-4 sm:p-6">{children}</main>
+          <main className="flex-1 p-4 sm:p-6">
+            <div className="mx-auto max-w-7xl">{children}</div>
+          </main>
         </div>
       </div>
     </div>
