@@ -1,21 +1,12 @@
-import { redirect } from "next/navigation";
-import { AppShell } from "@/components/app/app-shell";
-import { LeadsTable } from "@/components/leads/leads-table";
-import { createClient } from "@/utils/supabase/server";
+import { AppShell } from "../../../components/app/app-shell";
+import { LeadsTable } from "../../../components/leads/leads-table";
+import { createServerSupabaseClient } from "../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const supabase = createServerSupabaseClient();
 
   const { data: leads, error } = await supabase
     .from("leads")
