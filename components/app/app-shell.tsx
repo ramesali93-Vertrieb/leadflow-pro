@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import Link from "next/link";
 import { AppSidebar } from "./app-sidebar";
 import { ThemeToggle } from "../theme-toggle";
 
@@ -25,10 +24,6 @@ export function AppShell({
           <header className="app-header">
             <div className="app-header-row">
               <div>
-                <div className="mobile-brand">
-                  <Link href="/dashboard">Leadflow Pro</Link>
-                </div>
-
                 <h1 className="app-title">{title}</h1>
 
                 {description ? (
