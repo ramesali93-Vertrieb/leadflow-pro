@@ -34,7 +34,7 @@ export default async function LeadsPage() {
     <AuthGuard>
       <AppShell
         title="Leads"
-        description="Arbeitsliste für deinen Vertrieb – mit Suche und Filtern."
+        description="Arbeitsliste für deinen Vertrieb – mit Suche, Filtern und Sortierung."
       >
         <LeadsListClient leads={leads} />
       </AppShell>
