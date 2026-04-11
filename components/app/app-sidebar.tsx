@@ -15,6 +15,11 @@ const navItems = [
     label: "Leads",
     icon: "◉",
   },
+  {
+    href: "/leads/import",
+    label: "Import",
+    icon: "⇪",
+  },
 ];
 
 function isActive(pathname: string, href: string) {
