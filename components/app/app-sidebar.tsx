@@ -8,10 +8,12 @@ const navItems = [
   {
     href: "/dashboard",
     label: "Dashboard",
+    icon: "◫",
   },
   {
     href: "/leads",
     label: "Leads",
+    icon: "◉",
   },
 ];
 
@@ -31,12 +33,40 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="sidebar">
-      <Link href="/dashboard" className="sidebar-brand">
-        Leadflow Pro
-      </Link>
+    <>
+      <aside className="sidebar">
+        <Link href="/dashboard" className="sidebar-brand">
+          Leadflow Pro
+        </Link>
 
-      <nav className="sidebar-nav">
+        <nav className="sidebar-nav">
+          {navItems.map((item) => {
+            const active = isActive(pathname, item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`sidebar-link${active ? " active" : ""}`}
+              >
+                <span className="sidebar-link-icon">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="sidebar-link sidebar-logout"
+          >
+            <span className="sidebar-link-icon">↗</span>
+            <span>Logout</span>
+          </button>
+        </nav>
+      </aside>
+
+      <nav className="mobile-nav">
         {navItems.map((item) => {
           const active = isActive(pathname, item.href);
 
@@ -44,9 +74,10 @@ export function AppSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`sidebar-link${active ? " active" : ""}`}
+              className={`mobile-nav-link${active ? " active" : ""}`}
             >
-              {item.label}
+              <span className="mobile-nav-icon">{item.icon}</span>
+              <span className="mobile-nav-label">{item.label}</span>
             </Link>
           );
         })}
@@ -54,19 +85,12 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={handleLogout}
-          className="sidebar-link"
-          style={{
-            marginTop: "8px",
-            textAlign: "left",
-            width: "100%",
-            border: "1px solid #27272a",
-            background: "transparent",
-            cursor: "pointer",
-          }}
+          className="mobile-nav-link mobile-nav-logout"
         >
-          Logout
+          <span className="mobile-nav-icon">↗</span>
+          <span className="mobile-nav-label">Logout</span>
         </button>
       </nav>
-    </aside>
+    </>
   );
 }
