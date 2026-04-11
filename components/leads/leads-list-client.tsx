@@ -9,6 +9,14 @@ type LeadsListClientProps = {
   leads: LeadListItem[];
 };
 
+type SortOption =
+  | "newest"
+  | "oldest"
+  | "due_asc"
+  | "name_asc"
+  | "name_desc"
+  | "priority_desc";
+
 const pageStyle: CSSProperties = {
   display: "grid",
   gap: "20px",
@@ -131,6 +139,19 @@ function normalize(value: string | null | undefined) {
   return (value ?? "").trim().toLowerCase();
 }
 
+function priorityWeight(priority: string) {
+  const value = normalize(priority);
+  if (value === "hoch") return 3;
+  if (value === "mittel") return 2;
+  if (value === "niedrig") return 1;
+  return 0;
+}
+
+function dueDateWeight(value: string | null) {
+  if (!value) return Number.MAX_SAFE_INTEGER;
+  return new Date(`${value}T00:00:00`).getTime();
+}
+
 function statusBadgeStyle(status: string): CSSProperties {
   const value = normalize(status);
 
@@ -206,10 +227,47 @@ function priorityBadgeStyle(priority: string): CSSProperties {
   return badgeStyle;
 }
 
+function sortLeads(leads: LeadListItem[], sortBy: SortOption) {
+  const items = [...leads];
+
+  items.sort((a, b) => {
+    if (sortBy === "newest") {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+
+    if (sortBy === "oldest") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }
+
+    if (sortBy === "due_asc") {
+      return dueDateWeight(a.due_date) - dueDateWeight(b.due_date);
+    }
+
+    if (sortBy === "name_asc") {
+      return a.full_name.localeCompare(b.full_name, "de");
+    }
+
+    if (sortBy === "name_desc") {
+      return b.full_name.localeCompare(a.full_name, "de");
+    }
+
+    if (sortBy === "priority_desc") {
+      const weightDiff = priorityWeight(b.priority) - priorityWeight(a.priority);
+      if (weightDiff !== 0) return weightDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+
+    return 0;
+  });
+
+  return items;
+}
+
 export function LeadsListClient({ leads }: LeadsListClientProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("alle");
   const [priorityFilter, setPriorityFilter] = useState("alle");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const uniqueStatuses = useMemo(() => {
     return Array.from(new Set(leads.map((lead) => lead.status).filter(Boolean))).sort((a, b) =>
@@ -226,7 +284,7 @@ export function LeadsListClient({ leads }: LeadsListClientProps) {
   const filteredLeads = useMemo(() => {
     const searchTerm = normalize(search);
 
-    return leads.filter((lead) => {
+    const filtered = leads.filter((lead) => {
       const matchesSearch =
         searchTerm.length === 0 ||
         normalize(lead.full_name).includes(searchTerm) ||
@@ -242,7 +300,9 @@ export function LeadsListClient({ leads }: LeadsListClientProps) {
 
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [leads, priorityFilter, search, statusFilter]);
+
+    return sortLeads(filtered, sortBy);
+  }, [leads, priorityFilter, search, sortBy, statusFilter]);
 
   return (
     <div style={pageStyle}>
@@ -297,6 +357,25 @@ export function LeadsListClient({ leads }: LeadsListClientProps) {
                   {priority}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div style={fieldWrapStyle}>
+            <label htmlFor="lead-sort" style={labelStyle}>
+              Sortierung
+            </label>
+            <select
+              id="lead-sort"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as SortOption)}
+              style={inputStyle}
+            >
+              <option value="newest">Neueste zuerst</option>
+              <option value="oldest">Älteste zuerst</option>
+              <option value="due_asc">Fällig zuerst</option>
+              <option value="priority_desc">Priorität hoch zuerst</option>
+              <option value="name_asc">Name A–Z</option>
+              <option value="name_desc">Name Z–A</option>
             </select>
           </div>
         </div>
