@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CSSProperties } from "react";
 import { AuthGuard } from "../../../../components/app/auth-guard";
 import { AppShell } from "../../../../components/app/app-shell";
 import { AddActivityForm } from "../../../../components/leads/add-activity-form";
@@ -108,6 +109,117 @@ function getProfileName(profileMap: Map<string, string>, id: string | null) {
   return profileMap.get(id) ?? id;
 }
 
+const pageGridStyle: CSSProperties = {
+  display: "grid",
+  gap: "24px",
+};
+
+const topCardsGridStyle: CSSProperties = {
+  display: "grid",
+  gap: "24px",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  alignItems: "start",
+};
+
+const cardStyle: CSSProperties = {
+  padding: "24px",
+};
+
+const sectionTitleStyle: CSSProperties = {
+  marginTop: 0,
+  marginBottom: "20px",
+  fontSize: "clamp(28px, 4vw, 38px)",
+  lineHeight: 1.05,
+  letterSpacing: "-0.04em",
+};
+
+const infoGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: "18px 24px",
+};
+
+const stackedGridStyle: CSSProperties = {
+  display: "grid",
+  gap: "18px",
+};
+
+const fieldStyle: CSSProperties = {
+  minWidth: 0,
+};
+
+const fieldLabelStyle: CSSProperties = {
+  display: "block",
+  marginBottom: "6px",
+  fontSize: "14px",
+  fontWeight: 700,
+  lineHeight: 1.3,
+};
+
+const fieldValueStyle: CSSProperties = {
+  fontSize: "clamp(16px, 2.2vw, 18px)",
+  lineHeight: 1.45,
+  color: "inherit",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
+
+const noteTextStyle: CSSProperties = {
+  whiteSpace: "pre-wrap",
+  lineHeight: 1.7,
+  fontSize: "16px",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
+
+const historyListStyle: CSSProperties = {
+  display: "grid",
+  gap: "16px",
+};
+
+const historyItemStyle: CSSProperties = {
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: "18px",
+  padding: "16px",
+  background: "rgba(255,255,255,0.04)",
+  backdropFilter: "blur(18px)",
+  WebkitBackdropFilter: "blur(18px)",
+};
+
+const historyHeadStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: "12px",
+  marginBottom: "10px",
+  flexWrap: "wrap",
+};
+
+const historyMetaStyle: CSSProperties = {
+  color: "rgba(255,255,255,0.56)",
+  fontSize: "14px",
+  lineHeight: 1.4,
+};
+
+const historyBodyStyle: CSSProperties = {
+  marginBottom: "10px",
+  whiteSpace: "pre-wrap",
+  lineHeight: 1.7,
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
+
+const metadataPreStyle: CSSProperties = {
+  marginTop: "12px",
+  padding: "12px",
+  borderRadius: "12px",
+  background: "rgba(0,0,0,0.28)",
+  color: "#d4d4d8",
+  overflowX: "auto",
+  fontSize: "12px",
+  lineHeight: 1.5,
+};
+
 export default async function LeadDetailPage({ params }: PageProps) {
   const supabase = createServerSupabaseClient();
   const { id } = params;
@@ -206,133 +318,111 @@ export default async function LeadDetailPage({ params }: PageProps) {
           </Link>
         }
       >
-        <div
-          style={{
-            display: "grid",
-            gap: "24px",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gap: "24px",
-              gridTemplateColumns: "1.2fr 0.8fr",
-            }}
-          >
-            <section className="card" style={{ padding: "24px" }}>
-              <h2 style={{ marginTop: 0 }}>Stammdaten</h2>
+        <div style={pageGridStyle}>
+          <div style={topCardsGridStyle}>
+            <section className="card" style={cardStyle}>
+              <h2 style={sectionTitleStyle}>Stammdaten</h2>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "16px 24px",
-                }}
-              >
-                <div>
-                  <strong>Name</strong>
-                  <div>{lead.full_name}</div>
+              <div style={infoGridStyle}>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Name</strong>
+                  <div style={fieldValueStyle}>{lead.full_name}</div>
                 </div>
 
-                <div>
-                  <strong>Anrede</strong>
-                  <div>{lead.salutation || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Anrede</strong>
+                  <div style={fieldValueStyle}>{lead.salutation || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>E-Mail</strong>
-                  <div>{lead.email || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>E-Mail</strong>
+                  <div style={fieldValueStyle}>{lead.email || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>Telefon</strong>
-                  <div>{lead.phone || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Telefon</strong>
+                  <div style={fieldValueStyle}>{lead.phone || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>Adresse</strong>
-                  <div>{buildAddress(lead)}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Adresse</strong>
+                  <div style={fieldValueStyle}>{buildAddress(lead)}</div>
                 </div>
 
-                <div>
-                  <strong>Quelle</strong>
-                  <div>{lead.source || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Quelle</strong>
+                  <div style={fieldValueStyle}>{lead.source || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>Status</strong>
-                  <div>{lead.status}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Status</strong>
+                  <div style={fieldValueStyle}>{lead.status}</div>
                 </div>
 
-                <div>
-                  <strong>Priorität</strong>
-                  <div>{lead.priority}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Priorität</strong>
+                  <div style={fieldValueStyle}>{lead.priority}</div>
                 </div>
 
-                <div>
-                  <strong>Nächster Schritt</strong>
-                  <div>{lead.next_step}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Nächster Schritt</strong>
+                  <div style={fieldValueStyle}>{lead.next_step}</div>
                 </div>
 
-                <div>
-                  <strong>Fällig</strong>
-                  <div>{formatDate(lead.due_date)}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Fällig</strong>
+                  <div style={fieldValueStyle}>{formatDate(lead.due_date)}</div>
                 </div>
               </div>
             </section>
 
-            <section className="card" style={{ padding: "24px" }}>
-              <h2 style={{ marginTop: 0 }}>CRM-Daten</h2>
+            <section className="card" style={cardStyle}>
+              <h2 style={sectionTitleStyle}>CRM-Daten</h2>
 
-              <div
-                style={{
-                  display: "grid",
-                  gap: "16px",
-                }}
-              >
-                <div>
-                  <strong>Angebot</strong>
-                  <div>{formatCurrency(lead.offer_amount)}</div>
+              <div style={stackedGridStyle}>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Angebot</strong>
+                  <div style={fieldValueStyle}>{formatCurrency(lead.offer_amount)}</div>
                 </div>
 
-                <div>
-                  <strong>Abschlusschance</strong>
-                  <div>{lead.win_chance}%</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Abschlusschance</strong>
+                  <div style={fieldValueStyle}>{lead.win_chance}%</div>
                 </div>
 
-                <div>
-                  <strong>Projektstart</strong>
-                  <div>{lead.project_start || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Projektstart</strong>
+                  <div style={fieldValueStyle}>{lead.project_start || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>Dachtyp</strong>
-                  <div>{lead.roof_type || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Dachtyp</strong>
+                  <div style={fieldValueStyle}>{lead.roof_type || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>Speicherinteresse</strong>
-                  <div>{lead.storage_interest || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Speicherinteresse</strong>
+                  <div style={fieldValueStyle}>{lead.storage_interest || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>Finanzierung</strong>
-                  <div>{lead.financing || "—"}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Finanzierung</strong>
+                  <div style={fieldValueStyle}>{lead.financing || "—"}</div>
                 </div>
 
-                <div>
-                  <strong>Owner</strong>
-                  <div>{getProfileName(profileMap, lead.owner_id)}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Owner</strong>
+                  <div style={fieldValueStyle}>{getProfileName(profileMap, lead.owner_id)}</div>
                 </div>
 
-                <div>
-                  <strong>Erstellt von</strong>
-                  <div>{getProfileName(profileMap, lead.created_by)}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Erstellt von</strong>
+                  <div style={fieldValueStyle}>{getProfileName(profileMap, lead.created_by)}</div>
                 </div>
 
-                <div>
-                  <strong>Letzte Aktivität</strong>
-                  <div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Letzte Aktivität</strong>
+                  <div style={fieldValueStyle}>
                     {lead.last_activity_type
                       ? `${formatActivityType(lead.last_activity_type)} · ${formatDateTime(
                           lead.last_activity_at
@@ -341,76 +431,49 @@ export default async function LeadDetailPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                <div>
-                  <strong>Zuletzt aktualisiert</strong>
-                  <div>{formatDateTime(lead.updated_at)}</div>
+                <div style={fieldStyle}>
+                  <strong style={fieldLabelStyle}>Zuletzt aktualisiert</strong>
+                  <div style={fieldValueStyle}>{formatDateTime(lead.updated_at)}</div>
                 </div>
               </div>
             </section>
           </div>
 
-          <section className="card" style={{ padding: "24px" }}>
-            <h2 style={{ marginTop: 0 }}>Basisnotiz</h2>
-            <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+          <section className="card" style={cardStyle}>
+            <h2 style={sectionTitleStyle}>Basisnotiz</h2>
+            <div style={noteTextStyle}>
               {lead.base_note || "Keine Basisnotiz vorhanden."}
             </div>
           </section>
 
           <AddActivityForm leadId={lead.id} fallbackUserId={fallbackUserId} />
 
-          <section className="card" style={{ padding: "24px" }}>
-            <h2 style={{ marginTop: 0 }}>Aktivitätshistorie</h2>
+          <section className="card" style={cardStyle}>
+            <h2 style={sectionTitleStyle}>Aktivitätshistorie</h2>
 
             {(activities ?? []).length === 0 ? (
               <div className="empty-state">Noch keine Aktivitäten vorhanden.</div>
             ) : (
-              <div style={{ display: "grid", gap: "16px" }}>
+              <div style={historyListStyle}>
                 {(activities as LeadActivity[]).map((activity) => (
-                  <div
-                    key={activity.id}
-                    style={{
-                      border: "1px solid #27272a",
-                      borderRadius: "14px",
-                      padding: "16px",
-                      background: "#111113",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "16px",
-                        marginBottom: "8px",
-                      }}
-                    >
+                  <div key={activity.id} style={historyItemStyle}>
+                    <div style={historyHeadStyle}>
                       <strong>{formatActivityType(activity.activity_type)}</strong>
-                      <span style={{ color: "#a1a1aa", fontSize: "14px" }}>
+                      <span style={historyMetaStyle}>
                         {formatDateTime(activity.created_at)}
                       </span>
                     </div>
 
-                    <div style={{ marginBottom: "10px", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-                      {activity.body}
-                    </div>
+                    <div style={historyBodyStyle}>{activity.body}</div>
 
-                    <div style={{ color: "#a1a1aa", fontSize: "14px" }}>
+                    <div style={historyMetaStyle}>
                       Von: {getProfileName(profileMap, activity.user_id)}
                     </div>
 
                     {activity.metadata &&
                     typeof activity.metadata === "object" &&
                     Object.keys(activity.metadata).length > 0 ? (
-                      <pre
-                        style={{
-                          marginTop: "12px",
-                          padding: "12px",
-                          borderRadius: "10px",
-                          background: "#09090b",
-                          color: "#d4d4d8",
-                          overflowX: "auto",
-                          fontSize: "12px",
-                        }}
-                      >
+                      <pre style={metadataPreStyle}>
                         {JSON.stringify(activity.metadata, null, 2)}
                       </pre>
                     ) : null}
