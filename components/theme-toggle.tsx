@@ -6,23 +6,34 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as "dark" | "light";
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.setAttribute("data-theme", saved);
+    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
+
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      return;
     }
+
+    document.documentElement.setAttribute("data-theme", "dark");
   }, []);
 
-  function toggleTheme() {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
+  function handleToggle() {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("theme", nextTheme);
   }
 
   return (
-    <button onClick={toggleTheme} className="theme-toggle">
-      {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+    <button
+      type="button"
+      onClick={handleToggle}
+      className="theme-toggle"
+      aria-label={
+        theme === "dark" ? "Zu hellem Modus wechseln" : "Zu dunklem Modus wechseln"
+      }
+    >
+      {theme === "dark" ? "☀️ Hell" : "🌙 Dunkel"}
     </button>
   );
 }
