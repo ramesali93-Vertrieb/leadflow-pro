@@ -17,7 +17,7 @@ type ParsedLead = {
   status: string;
   priority: string;
   next_step: string;
-  due_date: string | null;
+  due_date: string;
   base_note: string | null;
   source: string | null;
   project_start: string | null;
@@ -200,6 +200,15 @@ function cleanupValue(value: string) {
   return value.trim().replace(/\s+/g, " ").replace(/\.$/, "").trim();
 }
 
+function getDefaultDueDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 3);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function splitBlocks(raw: string) {
   return raw
     .replace(/\r\n/g, "\n")
@@ -222,20 +231,24 @@ function extractFieldMap(block: string) {
 
     const key = normalizeKey(match[1]);
     const value = cleanupValue(match[2]);
-    if (!value) continue;
-
     map.set(key, value);
   }
 
   return map;
 }
 
-function isIgnorableMetaBlock(map: Map<string, string>) {
-  if (map.size === 0) return true;
+function isIgnorableMetaBlock(block: string, map: Map<string, string>) {
+  const cleanedBlock = block.trim();
 
-  const allowedMetaKeys = new Set(["lead id", "lead_id"]);
+  if (!cleanedBlock) return true;
+
   const keys = Array.from(map.keys());
 
+  if (keys.length === 0) {
+    return /^lead[\s_]?id\s*:/i.test(cleanedBlock);
+  }
+
+  const allowedMetaKeys = new Set(["lead id", "lead_id"]);
   return keys.every((key) => allowedMetaKeys.has(key));
 }
 
@@ -406,7 +419,7 @@ function parseBlock(
   const warnings: string[] = [];
   const errors: string[] = [];
 
-  if (isIgnorableMetaBlock(map)) {
+  if (isIgnorableMetaBlock(block, map)) {
     return {
       lead: null,
       warnings: [],
@@ -458,7 +471,7 @@ function parseBlock(
     status: "Neu",
     priority: "Mittel",
     next_step: "Erstkontakt",
-    due_date: null,
+    due_date: getDefaultDueDate(),
     base_note: collectBaseNote(map),
     source: "Import",
     project_start: extractProjectStart(map),
@@ -502,6 +515,7 @@ function parseLeadText(raw: string): ParseResult {
 
   blocks.forEach((block, index) => {
     const result = parseBlock(block, index);
+
     if (result.ignored) return;
 
     warnings.push(...result.warnings);
@@ -648,7 +662,7 @@ ist_eigentuemer: Ja.`,
 
         <div style={{ ...helperStyle, marginTop: "14px" }}>
           Standardwerte beim Import: Status = Neu, Priorität = Mittel, nächster Schritt =
-          Erstkontakt.
+          Erstkontakt, Fälligkeit = in 3 Tagen.
         </div>
       </section>
 
@@ -723,6 +737,11 @@ ist_eigentuemer: Ja.`,
                       <div>
                         <span style={fieldLabelStyle}>Projektstart</span>
                         <div style={fieldValueStyle}>{lead.project_start || "—"}</div>
+                      </div>
+
+                      <div>
+                        <span style={fieldLabelStyle}>Fällig</span>
+                        <div style={fieldValueStyle}>{lead.due_date}</div>
                       </div>
 
                       <div>
