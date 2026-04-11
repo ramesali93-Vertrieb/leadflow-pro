@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AuthGuard } from "../../../components/app/auth-guard";
 import { AppShell } from "../../../components/app/app-shell";
 import { LeadsListClient } from "../../../components/leads/leads-list-client";
@@ -35,6 +36,11 @@ export default async function LeadsPage() {
       <AppShell
         title="Leads"
         description="Arbeitsliste für deinen Vertrieb – mit Suche, Filtern und Sortierung."
+        actions={
+          <Link href="/leads/import" className="dashboard-primary-link">
+            Leads importieren
+          </Link>
+        }
       >
         <LeadsListClient leads={leads} />
       </AppShell>
