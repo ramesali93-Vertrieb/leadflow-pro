@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { AppSidebar } from "./app-sidebar";
+import { ThemeToggle } from "../theme-toggle";
 
 type AppShellProps = {
   title: string;
@@ -35,7 +36,10 @@ export function AppShell({
                 ) : null}
               </div>
 
-              {actions ? <div>{actions}</div> : null}
+              <div className="app-header-actions">
+                <ThemeToggle />
+                {actions ? <div>{actions}</div> : null}
+              </div>
             </div>
           </header>
 
