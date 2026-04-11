@@ -230,6 +230,15 @@ function extractFieldMap(block: string) {
   return map;
 }
 
+function isIgnorableMetaBlock(map: Map<string, string>) {
+  if (map.size === 0) return true;
+
+  const allowedMetaKeys = new Set(["lead id", "lead_id"]);
+  const keys = Array.from(map.keys());
+
+  return keys.every((key) => allowedMetaKeys.has(key));
+}
+
 function parseGermanAddress(address: string) {
   const cleaned = cleanupValue(address);
 
@@ -301,13 +310,21 @@ function extractSalutation(map: Map<string, string>, rawName: string | null) {
 }
 
 function extractFullName(map: Map<string, string>) {
+  const firstName = map.get("vorname");
   const explicitName = map.get("name");
 
-  if (map.get("vorname") || map.get("name")) {
-    const first = cleanupValue(map.get("vorname") || "");
-    let last = cleanupValue(map.get("name") || "");
-    if (last.toLowerCase().startsWith("frau ")) last = last.slice(5).trim();
-    if (last.toLowerCase().startsWith("herr ")) last = last.slice(5).trim();
+  if (firstName || explicitName) {
+    const first = cleanupValue(firstName || "");
+    let last = cleanupValue(explicitName || "");
+
+    if (last.toLowerCase().startsWith("frau ")) {
+      last = last.slice(5).trim();
+    }
+
+    if (last.toLowerCase().startsWith("herr ")) {
+      last = last.slice(5).trim();
+    }
+
     const combined = [first, last].filter(Boolean).join(" ").trim();
     if (combined) return combined;
   }
@@ -317,6 +334,7 @@ function extractFullName(map: Map<string, string>) {
       .replace(/^frau\s+/i, "")
       .replace(/^herr\s+/i, "")
       .trim();
+
     if (name) return name;
   }
 
@@ -370,7 +388,9 @@ function collectBaseNote(map: Map<string, string>) {
 
   for (const key of keysForNote) {
     const value = map.get(key);
-    if (value) noteEntries.push([key, value]);
+    if (value) {
+      noteEntries.push([key, value]);
+    }
   }
 
   if (noteEntries.length === 0) return null;
@@ -381,10 +401,19 @@ function collectBaseNote(map: Map<string, string>) {
 function parseBlock(
   block: string,
   index: number
-): { lead: ParsedLead | null; warnings: string[]; errors: string[] } {
+): { lead: ParsedLead | null; warnings: string[]; errors: string[]; ignored: boolean } {
   const map = extractFieldMap(block);
   const warnings: string[] = [];
   const errors: string[] = [];
+
+  if (isIgnorableMetaBlock(map)) {
+    return {
+      lead: null,
+      warnings: [],
+      errors: [],
+      ignored: true,
+    };
+  }
 
   const fullName = extractFullName(map);
   const salutation = extractSalutation(map, map.get("name") || null);
@@ -441,10 +470,20 @@ function parseBlock(
   };
 
   if (errors.length > 0) {
-    return { lead: null, warnings, errors };
+    return {
+      lead: null,
+      warnings,
+      errors,
+      ignored: false,
+    };
   }
 
-  return { lead, warnings, errors };
+  return {
+    lead,
+    warnings,
+    errors,
+    ignored: false,
+  };
 }
 
 function parseLeadText(raw: string): ParseResult {
@@ -463,16 +502,25 @@ function parseLeadText(raw: string): ParseResult {
 
   blocks.forEach((block, index) => {
     const result = parseBlock(block, index);
+    if (result.ignored) return;
+
     warnings.push(...result.warnings);
     errors.push(...result.errors);
-    if (result.lead) leads.push(result.lead);
+
+    if (result.lead) {
+      leads.push(result.lead);
+    }
   });
 
   if (leads.length === 0 && errors.length === 0) {
     errors.push("Es konnten keine gültigen Leads erkannt werden.");
   }
 
-  return { leads, warnings, errors };
+  return {
+    leads,
+    warnings,
+    errors,
+  };
 }
 
 export function LeadImportClient() {
@@ -496,7 +544,8 @@ Dachform: Satteldach
 Dachgröße: 50 - 100qm
 Dachoberfläche: Ziegel (Ton / Beton)
 Stromspeicher gewünscht? Ja
-Finanzierungswunsch? Ich bin offen für verschiedene Optionen Gewünschter Projektstart: So schnell wie möglich
+Finanzierungswunsch? Ich bin offen für verschiedene Optionen
+Gewünschter Projektstart: So schnell wie möglich
 Stromverbrauch: Mehr als 3.500 kWh
 Sonstige Kommentare:
 -----------------------------------
